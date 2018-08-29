@@ -1,0 +1,20 @@
+{
+  "extends": [
+    "tslint:recommended"
+  ],
+  "jsRules": {},
+  "rules": {
+    "align": [false, "parameters"],
+    "variable-name": [true, "allow-leading-underscore"],
+    "interface-name": [true, "never-prefix"],
+    "trailing-comma": [true, {
+      "multiline": "never",
+      "singleline": "never"
+    }],
+    "no-console": [true, "allow"],
+    "object-literal-sort-keys": false,
+    "member-ordering": false,
+    "max-classes-per-file": [false]
+  },
+  "rulesDirectory": []
+}
