@@ -33,20 +33,61 @@ export class CombatLogEvent {
   get sourceName(): string {
     return this._sourceName;
   }
+
+  get destGuid(): string {
+    return this._destGuid;
+  }
+
+  get destName(): string {
+    return this._destName;
+  }
 }
 
 export class SpellEvent extends CombatLogEvent {
-  private spellId: number;
-  private spellName: string;
-  private spellSchool: number;
+  private _spellId: number;
+  private _spellName: string;
+  private _spellSchool: number;
 
   constructor(timestamp: number, event: string,
     sourceGuid: string, sourceName: string, destGuid: string, destName: string,
     spellId: number, spellName: string, spellSchool: number) {
     super(timestamp, event, sourceGuid, sourceName, destGuid, destName);
-    this.spellId = spellId;
-    this.spellName = spellName;
-    this.spellSchool = spellSchool;
+    this._spellId = spellId;
+    this._spellName = spellName;
+    this._spellSchool = spellSchool;
+  }
+
+  get spellId(): number {
+    return this._spellId;
+  }
+
+  get spellName(): string {
+    return this._spellName;
+  }
+
+  get spellSchool(): number {
+    return this._spellSchool;
+  }
+}
+
+export class SpellAuraAppliedEvent extends SpellEvent {
+  private _auraType: string;
+  private _amount: number;
+
+  constructor(timestamp: number, event: string,
+    sourceGuid: string, sourceName: string, destGuid: string, destName: string,
+    spellId: number, spellName: string, spellSchool: number, auraType: string, amount: number) {
+    super(timestamp, event, sourceGuid, sourceName, destGuid, destName, spellId, spellName, spellSchool);
+    this._auraType = auraType;
+    this._amount = amount;
+  }
+
+  get auraType(): string {
+    return this._auraType;
+  }
+
+  get amount(): number {
+    return this._amount;
   }
 }
 
@@ -86,17 +127,23 @@ export const parseCombatLogLine = (line: string): CombatLogEvent => {
   const destName = data[7].replace(/"/g, "");
 
   if (eventType.indexOf("SPELL") === 0) {
-    const spellId = parseInt(data[8], 16);
-    const spellName = data[9];
-    const spellSchool = parseInt(data[10], 16);
+    const spellId = parseInt(data[10], 10);
+    const spellName = data[11].replace(/"/g, "");
+    const spellSchool = parseInt(data[12], 16);
 
-    if (eventType.indexOf("_AURA_REMOVED") !== -1) {
-      const auraType = data[11];
-      const amount = data[12] !== undefined ? parseInt(data[12], 10) : 0;
+    if (eventType.indexOf("_AURA_APPLIED") !== -1 || eventType.indexOf("_AURA_REMOVED") !== -1) {
+      const auraType = data[13];
+      const amount = data[14] !== undefined ? parseInt(data[14], 10) : 0;
 
-      return new SpellAuraRemovedEvent(timestamp, eventType,
-        sourceGuid, sourceName, destGuid, destName,
-        spellId, spellName, spellSchool, auraType, amount);
+      if (eventType === "SPELL_AURA_APPLIED") {
+        return new SpellAuraAppliedEvent(timestamp, eventType,
+          sourceGuid, sourceName, destGuid, destName,
+          spellId, spellName, spellSchool, auraType, amount);
+      } else if (eventType === "SPELL_AURA_REMOVED") {
+        return new SpellAuraRemovedEvent(timestamp, eventType,
+          sourceGuid, sourceName, destGuid, destName,
+          spellId, spellName, spellSchool, auraType, amount);
+      }
     }
   }
 
